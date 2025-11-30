@@ -3,56 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TPE GOSS 地勤作業系統</title>
+    <title>入境監控 (首頁) | TPE GOSS</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #121212; color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        h1 { color: #4facfe; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; }
-        
-        .menu-btn {
-            background: #1e1e1e;
-            color: #fff;
-            width: 280px;
-            padding: 20px;
-            margin: 10px;
-            border: 1px solid #333;
-            border-radius: 12px;
-            text-align: center;
-            text-decoration: none;
-            font-size: 20px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .menu-btn:active { transform: scale(0.95); }
-        .btn-in { border-left: 5px solid #00f260; }
-        .btn-out { border-left: 5px solid #ffca28; }
-        
-        .footer { position: absolute; bottom: 20px; text-align: center; color: #666; font-size: 10px; line-height: 1.5; }
-        .footer strong { color: #888; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #000; color: #fff; margin: 0; padding-bottom: 60px; }
+        .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #111; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: center; z-index: 1000; gap: 10px; }
+        .nav-btn { background: #222; color: #888; border: 1px solid #444; padding: 6px 12px; border-radius: 20px; font-size: 13px; text-decoration: none; transition: 0.2s; }
+        .nav-btn.active { background: #00f260; color: #000; border-color: #00f260; font-weight: bold; }
+        .container { padding: 60px 10px 80px 10px; max-width: 600px; margin: 0 auto; }
+        .status-bar { text-align: center; font-size: 11px; color: #666; margin-bottom: 10px; }
+        .card { background: #1a1a1a; border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #555; }
+        .status-red { border-left-color: #ff4b4b; background: rgba(40,0,0,0.25); }
+        .status-yellow { border-left-color: #f1c40f; background: rgba(40,30,0,0.15); }
+        .col-left { display: flex; flex-direction: column; width: 30%; }
+        .flight { font-size: 20px; font-weight: 800; color: #fff; }
+        .callsign { font-size: 11px; color: #888; font-family: monospace; }
+        .col-center { text-align: center; width: 40%; }
+        .alt { font-size: 18px; font-weight: bold; color: #4facfe; font-family: monospace; }
+        .status-tag { font-size: 10px; background: #333; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; color: #ccc;}
+        .col-right { text-align: right; width: 30%; }
+        .gate { font-size: 24px; font-weight: bold; color: #00f260; }
+        .gate-label { font-size: 9px; color: #666; }
+        .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
-
-    <h1>✈️ TPE GOSS</h1>
-
-    <a href="inbound.html" class="menu-btn btn-in">
-        <span>🛬</span> 入境監控 (Arrivals)
-    </a>
-
-    <a href="outbound.html" class="menu-btn btn-out">
-        <span>🛫</span> 出境監控 (Departures)
-    </a>
-
-    <div class="footer">
-        System Designed & Developed by <strong>TIAS RS XinZhi</strong><br>
-        AI Co-pilot: <strong>Gemini</strong><br>
-        Data Sources: Taoyuan Airport FIDS / OpenSky Network
+    <div class="navbar">
+        <a href="index.html" class="nav-btn active">🛬 入境優先</a>
+        <a href="outbound.html" class="nav-btn">🛫 出境</a>
+        <a href="schedule.html" class="nav-btn">📅 班表</a>
     </div>
+    <div class="container">
+        <div class="status-bar" id="update-time">載入中...</div>
+        <div id="list"></div>
+    </div>
+    <div class="footer">System by <strong>TIAS RS XinZhi</strong> & Gemini</div>
+    <script>
+        // ✅ 已填入您提供的 RealTime_Flight 連結
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSU9r4JTOOhZ3qQKEXNZpHqR9B-EQ35U3XwR74LKkJk1v1Rdan8VMgZjKWb1khjCU_VVp4hJ2sJPnx3/pub?gid=0&single=true&output=csv';
 
+        async function fetchData() {
+            const list = document.getElementById('list');
+            try {
+                const res = await fetch(CSV_URL + '&t=' + Date.now());
+                const text = await res.text();
+                const rows = text.split('\n').map(r => r.split(','));
+                list.innerHTML = '';
+                let count = 0;
+                for (let i = 1; i < rows.length; i++) {
+                    let cols = rows[i];
+                    if (cols.length < 5) continue;
+                    let fno = clean(cols[0]);
+                    let radar = clean(cols[1]);
+                    let alt = clean(cols[2]);
+                    let status = clean(cols[3]);
+                    let gate = clean(cols[5]);
+                    if (!fno || fno.includes('航班號')) continue;
+                    let colorClass = '';
+                    if (status.includes('即將落地')) colorClass = 'status-red';
+                    else if (status.includes('進場中')) colorClass = 'status-yellow';
+                    let html = `
+                        <div class="card ${colorClass}">
+                            <div class="col-left"><span class="flight">${fno}</span><span class="callsign">${radar}</span></div>
+                            <div class="col-center"><div class="alt">${alt}</div><div class="status-tag">${status}</div></div>
+                            <div class="col-right"><div class="gate">${gate || '-'}</div><div class="gate-label">GATE</div></div>
+                        </div>`;
+                    list.innerHTML += html;
+                    count++;
+                }
+                if (count === 0) list.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px">目前無進場航班</div>';
+                document.getElementById('update-time').innerText = `最後更新: ${new Date().toLocaleTimeString()} (${count}架)`;
+            } catch (e) { console.error(e); }
+        }
+        function clean(str) { return str ? str.replace(/"/g, '').trim() : ''; }
+        fetchData();
+        setInterval(fetchData, 10000);
+    </script>
 </body>
 </html>
