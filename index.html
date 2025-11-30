@@ -2,219 +2,57 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GOSS 航班看板</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPE GOSS 地勤作業系統</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background: #121212; 
-            color: #e0e0e0; 
-            margin: 0; 
-            padding: 0; 
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* 頂部固定導航列 */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #121212; color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        h1 { color: #4facfe; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .menu-btn {
             background: #1e1e1e;
-            border-bottom: 1px solid #333;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 15px;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-        }
-
-        .navbar h1 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 700;
             color: #fff;
-        }
-
-        /* 重新整理按鈕 */
-        .refresh-btn {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .refresh-btn:active { transform: scale(0.95); background: #1976D2; }
-        .refresh-btn:disabled { background: #555; color: #aaa; cursor: not-allowed; }
-
-        /* 內容區塊 */
-        .container {
-            padding: 80px 10px 20px 10px; /* 避開頂部導航 */
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .status-bar {
-            text-align: center;
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 15px;
-        }
-
-        /* 航班卡片 */
-        .flight-card {
-            background: #252525;
+            width: 280px;
+            padding: 20px;
+            margin: 10px;
+            border: 1px solid #333;
             border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 6px solid #555;
+            text-align: center;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+            transition: all 0.3s ease;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-
-        /* 狀態顏色 */
-        .status-red { border-left-color: #ff5252; background: linear-gradient(90deg, #2c1515 0%, #252525 100%); }
-        .status-yellow { border-left-color: #ffca28; background: linear-gradient(90deg, #2c250a 0%, #252525 100%); }
-        .status-green { border-left-color: #66bb6a; }
-
-        .info-left { display: flex; flex-direction: column; }
-        .flight-no { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: 1px; }
-        .callsign { font-size: 13px; color: #bbb; margin-top: 2px; }
-
-        .info-center { text-align: center; flex: 1; }
-        .alt { font-size: 18px; font-family: 'Courier New', monospace; font-weight: bold; color: #4fc3f7; }
-        .status-tag { 
-            font-size: 11px; 
-            background: rgba(255,255,255,0.1); 
-            padding: 3px 8px; 
-            border-radius: 10px; 
-            margin-top: 4px; 
-            display: inline-block; 
-        }
-
-        .info-right { text-align: right; min-width: 50px; }
-        .gate { font-size: 26px; font-weight: bold; color: #69f0ae; }
-        .gate-label { font-size: 10px; color: #888; text-transform: uppercase; }
-
-        .empty-msg { text-align: center; color: #666; margin-top: 50px; }
+        
+        .menu-btn:active { transform: scale(0.95); }
+        .btn-in { border-left: 5px solid #00f260; }
+        .btn-out { border-left: 5px solid #ffca28; }
+        
+        .footer { position: absolute; bottom: 20px; text-align: center; color: #666; font-size: 10px; line-height: 1.5; }
+        .footer strong { color: #888; }
     </style>
 </head>
 <body>
 
-    <div class="navbar">
-        <h1>TPE 進場看板</h1>
-        <button class="refresh-btn" onclick="fetchFlights()" id="btn-refresh">
-            🔄 刷新
-        </button>
+    <h1>✈️ TPE GOSS</h1>
+
+    <a href="inbound.html" class="menu-btn btn-in">
+        <span>🛬</span> 入境監控 (Arrivals)
+    </a>
+
+    <a href="outbound.html" class="menu-btn btn-out">
+        <span>🛫</span> 出境監控 (Departures)
+    </a>
+
+    <div class="footer">
+        System Designed & Developed by <strong>TIAS RS XinZhi</strong><br>
+        AI Co-pilot: <strong>Gemini</strong><br>
+        Data Sources: Taoyuan Airport FIDS / OpenSky Network
     </div>
 
-    <div class="container">
-        <div class="status-bar" id="last-update">準備就緒</div>
-        <div id="flight-list">
-            <div class="empty-msg">請點擊「刷新」載入資料</div>
-        </div>
-    </div>
-
-    <script>
-        // ⚠️⚠️⚠️ 請在這裡貼上您的 Google Sheet CSV 網址 ⚠️⚠️⚠️
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSU9r4JTOOhZ3qQKEXNZpHqR9B-EQ35U3XwR74LKkJk1v1Rdan8VMgZjKWb1khjCU_VVp4hJ2sJPnx3/pub?gid=0&single=true&output=csv';
-
-        async function fetchFlights() {
-            const btn = document.getElementById('btn-refresh');
-            const status = document.getElementById('last-update');
-            const container = document.getElementById('flight-list');
-
-            // 按鈕變更狀態 (防止狂按)
-            btn.disabled = true;
-            btn.innerHTML = '⏳ 載入中...';
-            status.innerText = '正在連線衛星資料庫...';
-
-            try {
-                // 加上時間戳記 (t=...) 強制 Google 吐出最新資料，解決快取延遲問題
-                const noCacheUrl = csvUrl + '&t=' + new Date().getTime();
-                
-                const response = await fetch(noCacheUrl);
-                const data = await response.text();
-                const rows = data.split('\n').map(row => row.split(','));
-                
-                container.innerHTML = ''; // 清空舊資料
-                
-                let hasData = false;
-                let count = 0;
-
-                // 從第 2 行開始讀 (第 1 行是標題)
-                for (let i = 1; i < rows.length; i++) {
-                    let cols = rows[i];
-                    if (cols.length < 5) continue;
-
-                    // 去除 CSV 的引號
-                    let fno = cols[0].replace(/"/g, '');
-                    let callsign = cols[1].replace(/"/g, '');
-                    let alt = cols[2].replace(/"/g, '');
-                    let statusText = cols[3].replace(/"/g, '');
-                    let gate = cols[5] ? cols[5].replace(/"/g, '').trim() : '';
-
-                    if (!fno || fno === '航班號') continue;
-
-                    hasData = true;
-                    count++;
-
-                    // 判斷顏色
-                    let statusClass = 'status-green'; // 預設
-                    if (statusText.includes('即將落地')) statusClass = 'status-red';
-                    else if (statusText.includes('進場中')) statusClass = 'status-yellow';
-
-                    let html = `
-                        <div class="flight-card ${statusClass}">
-                            <div class="info-left">
-                                <span class="flight-no">${fno}</span>
-                                <span class="callsign">${callsign}</span>
-                            </div>
-                            <div class="info-center">
-                                <div class="alt">${alt} ft</div>
-                                <div class="status-tag">${statusText}</div>
-                            </div>
-                            <div class="info-right">
-                                <div class="gate">${gate || '-'}</div>
-                                <div class="gate-label">Gate</div>
-                            </div>
-                        </div>
-                    `;
-                    container.innerHTML += html;
-                }
-                
-                if (!hasData) {
-                    container.innerHTML = '<div class="empty-msg">目前空域無進場航班</div>';
-                }
-
-                // 更新時間顯示
-                const now = new Date();
-                status.innerText = `最後更新: ${now.toLocaleTimeString()} (共 ${count} 架)`;
-
-            } catch (error) {
-                console.error('Error:', error);
-                status.innerText = '❌ 連線失敗，請檢查網路';
-                container.innerHTML = '<div class="empty-msg" style="color:red">無法讀取資料</div>';
-            } finally {
-                // 恢復按鈕
-                btn.disabled = false;
-                btn.innerHTML = '🔄 刷新';
-            }
-        }
-
-        // 網頁打開時自動跑一次
-        fetchFlights();
-    </script>
 </body>
 </html>

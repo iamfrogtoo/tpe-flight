@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>入境監控 | TPE GOSS</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #000; color: #fff; margin: 0; padding-bottom: 60px; }
+        
+        /* 頂部導航 */
+        .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 15px; z-index: 100; justify-content: space-between; }
+        .back-btn { color: #aaa; text-decoration: none; font-size: 14px; }
+        .navbar h1 { font-size: 16px; margin: 0; color: #00f260; }
+        .refresh-btn { background: none; border: 1px solid #444; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+        /* 列表容器 */
+        .container { padding: 60px 10px 80px 10px; max-width: 600px; margin: 0 auto; }
+        
+        .status-bar { text-align: center; font-size: 11px; color: #666; margin-bottom: 10px; }
+
+        /* 卡片設計 */
+        .card { background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; flex-direction: column; border-left: 4px solid #555; }
+        
+        .card-main { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* 狀態色 */
+        .status-red { border-left-color: #ff4b4b; background: rgba(40,0,0,0.3); }
+        .status-yellow { border-left-color: #f1c40f; background: rgba(40,30,0,0.2); }
+        
+        .col-left { display: flex; flex-direction: column; }
+        .flight { font-size: 20px; font-weight: 800; color: #fff; }
+        .callsign { font-size: 11px; color: #888; font-family: monospace; }
+        
+        .col-center { text-align: center; width: 35%; }
+        .alt { font-size: 18px; font-weight: bold; color: #4facfe; font-family: monospace; }
+        .status-tag { font-size: 10px; background: #333; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; color: #ccc;}
+        
+        .col-right { text-align: right; }
+        .gate { font-size: 24px; font-weight: bold; color: #00f260; }
+        .gate-label { font-size: 9px; color: #666; }
+
+        /* 備註欄位 (預留) */
+        .note-row { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #333; font-size: 12px; color: #f39c12; display: none; }
+        .note-row.has-note { display: block; }
+
+        /* 頁尾簽名 */
+        .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; line-height: 1.4; border-top: 1px solid #222; margin-top: 20px; }
+        .footer strong { color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="index.html" class="back-btn">‹ 返回</a>
+        <h1>🛬 入境看板 (Inbound)</h1>
+        <button class="refresh-btn" onclick="fetchData()">⟳</button>
+    </div>
+
+    <div class="container">
+        <div class="status-bar" id="update-time">載入中...</div>
+        <div id="list"></div>
+    </div>
+
+    <div class="footer">
+        System Designed by <strong>TIAS RS XinZhi</strong><br>
+        Co-developed with <strong>Gemini AI</strong><br>
+        Data: Taoyuan Airport / OpenSky
+    </div>
+
+    <script>
+        // ⚠️⚠️⚠️ 請貼上 RealTime_Flights 的 CSV 連結 ⚠️⚠️⚠️
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSU9r4JTOOhZ3qQKEXNZpHqR9B-EQ35U3XwR74LKkJk1v1Rdan8VMgZjKWb1khjCU_VVp4hJ2sJPnx3/pub?gid=0&single=true&output=csv';
+
+        async function fetchData() {
+            const list = document.getElementById('list');
+            const timeLabel = document.getElementById('update-time');
+            
+            try {
+                timeLabel.innerText = '更新中...';
+                const res = await fetch(CSV_URL + '&t=' + Date.now());
+                const text = await res.text();
+                const rows = text.split('\n').map(r => r.split(','));
+
+                list.innerHTML = '';
+                let count = 0;
+
+                // 從第 2 行開始 (跳過標題)
+                for (let i = 1; i < rows.length; i++) {
+                    let cols = rows[i];
+                    if (cols.length < 5) continue;
+
+                    // 對應 Python 寫入順序: 
+                    // [0]航班, [1]雷達號, [2]高度, [3]狀態, [4]ETA, [5]機坪, [6]更新, [7]備註(預留)
+                    let fno = clean(cols[0]);
+                    let radar = clean(cols[1]);
+                    let alt = clean(cols[2]);
+                    let status = clean(cols[3]);
+                    let gate = clean(cols[5]);
+                    let note = cols[7] ? clean(cols[7]) : ''; // 預留給未來的人員回報
+
+                    if (!fno || fno.includes('航班號')) continue;
+
+                    let colorClass = '';
+                    if (status.includes('即將落地')) colorClass = 'status-red';
+                    else if (status.includes('進場中')) colorClass = 'status-yellow';
+
+                    let html = `
+                        <div class="card ${colorClass}">
+                            <div class="card-main">
+                                <div class="col-left">
+                                    <span class="flight">${fno}</span>
+                                    <span class="callsign">${radar}</span>
+                                </div>
+                                <div class="col-center">
+                                    <div class="alt">${alt}</div>
+                                    <div class="status-tag">${status}</div>
+                                </div>
+                                <div class="col-right">
+                                    <div class="gate">${gate || '-'}</div>
+                                    <div class="gate-label">GATE</div>
+                                </div>
+                            </div>
+                            <div class="note-row ${note ? 'has-note' : ''}">
+                                💬 ${note}
+                            </div>
+                        </div>
+                    `;
+                    list.innerHTML += html;
+                    count++;
+                }
+                
+                if (count === 0) list.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px">目前無航班</div>';
+                timeLabel.innerText = `最後更新: ${new Date().toLocaleTimeString()} (共 ${count} 架)`;
+
+            } catch (e) {
+                console.error(e);
+                timeLabel.innerText = '❌ 連線失敗';
+            }
+        }
+
+        function clean(str) {
+            return str ? str.replace(/"/g, '').trim() : '';
+        }
+
+        fetchData();
+        setInterval(fetchData, 15000); // 每 15 秒自動刷新網頁
+    </script>
+</body>
+</html>

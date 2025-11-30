@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>出境監控 | TPE GOSS</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #000; color: #fff; margin: 0; padding-bottom: 60px; }
+        
+        .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 15px; z-index: 100; justify-content: space-between; }
+        .back-btn { color: #aaa; text-decoration: none; font-size: 14px; }
+        .navbar h1 { font-size: 16px; margin: 0; color: #ffca28; }
+        .refresh-btn { background: none; border: 1px solid #444; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+        .container { padding: 60px 10px 80px 10px; max-width: 600px; margin: 0 auto; }
+        .status-bar { text-align: center; font-size: 11px; color: #666; margin-bottom: 10px; }
+
+        /* 卡片設計 - 簡潔條列式 */
+        .card { background: #181818; border-bottom: 1px solid #333; padding: 15px 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .info-main { display: flex; flex-direction: column; }
+        .flight { font-size: 20px; font-weight: bold; color: #fff; }
+        .time { font-size: 14px; color: #ffca28; font-weight: bold; margin-top: 2px; }
+        
+        .info-status { text-align: right; }
+        .gate { font-size: 24px; font-weight: bold; color: #00f260; }
+        .status-text { font-size: 11px; color: #888; margin-top: 2px; }
+
+        .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; line-height: 1.4; border-top: 1px solid #222; margin-top: 20px; }
+        .footer strong { color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="index.html" class="back-btn">‹ 返回</a>
+        <h1>🛫 出境看板 (Outbound)</h1>
+        <button class="refresh-btn" onclick="fetchData()">⟳</button>
+    </div>
+
+    <div class="container">
+        <div class="status-bar" id="update-time">載入中...</div>
+        <div id="list"></div>
+    </div>
+
+    <div class="footer">
+        System Designed by <strong>TIAS RS XinZhi</strong><br>
+        Co-developed with <strong>Gemini AI</strong><br>
+        Data: Taoyuan Airport
+    </div>
+
+    <script>
+        // ⚠️⚠️⚠️ 請貼上 Departures 的 CSV 連結 ⚠️⚠️⚠️
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSU9r4JTOOhZ3qQKEXNZpHqR9B-EQ35U3XwR74LKkJk1v1Rdan8VMgZjKWb1khjCU_VVp4hJ2sJPnx3/pub?gid=2059190189&single=true&output=csv';
+
+        async function fetchData() {
+            const list = document.getElementById('list');
+            const timeLabel = document.getElementById('update-time');
+            
+            try {
+                timeLabel.innerText = '更新中...';
+                const res = await fetch(CSV_URL + '&t=' + Date.now());
+                const text = await res.text();
+                const rows = text.split('\n').map(r => r.split(','));
+
+                list.innerHTML = '';
+                let count = 0;
+
+                // [0]航班, [1]時間, [2]機坪, [3]狀態
+                for (let i = 1; i < rows.length; i++) {
+                    let cols = rows[i];
+                    if (cols.length < 4) continue;
+
+                    let fno = clean(cols[0]);
+                    let time = clean(cols[1]);
+                    let gate = clean(cols[2]);
+                    let status = clean(cols[3]);
+
+                    if (!fno || fno.includes('航班號')) continue;
+
+                    let html = `
+                        <div class="card">
+                            <div class="info-main">
+                                <span class="flight">${fno}</span>
+                                <span class="time">ETD ${time}</span>
+                            </div>
+                            <div class="info-status">
+                                <div class="gate">${gate || '-'}</div>
+                                <div class="status-text">${status}</div>
+                            </div>
+                        </div>
+                    `;
+                    list.innerHTML += html;
+                    count++;
+                }
+                
+                if (count === 0) list.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px">目前無出境航班</div>';
+                timeLabel.innerText = `最後更新: ${new Date().toLocaleTimeString()} (共 ${count} 筆)`;
+
+            } catch (e) {
+                console.error(e);
+                timeLabel.innerText = '❌ 連線失敗';
+            }
+        }
+
+        function clean(str) {
+            return str ? str.replace(/"/g, '').trim() : '';
+        }
+
+        fetchData();
+        setInterval(fetchData, 60000); // 出境每 60 秒刷新一次即可
+    </script>
+</body>
+</html>
