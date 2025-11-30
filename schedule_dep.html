@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>出境班表 | TPE GOSS</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #000; color: #fff; margin: 0; padding-bottom: 70px; }
+        .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #111; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-around; z-index: 1000; }
+        .nav-btn { color: #666; text-decoration: none; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
+        .nav-btn span { font-size: 16px; margin-bottom: 2px; }
+        .nav-btn.active { color: #ffca28; font-weight: bold; } /* 黃色 */
+        
+        .container { padding: 60px 10px 10px 10px; max-width: 600px; margin: 0 auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; color: #666; padding: 5px; border-bottom: 1px solid #333; }
+        td { padding: 10px 5px; border-bottom: 1px solid #222; }
+        .date { font-size: 10px; color: #ffca28; display: block; }
+        .flight { font-weight: bold; color: #fff; font-size: 15px; }
+        .gate { color: #00f260; font-weight: bold; }
+        
+        .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; margin-top: 20px; line-height: 1.5; }
+        .footer strong { color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="index.html" class="nav-btn"><span>🛬</span>即時入境</a>
+        <a href="outbound.html" class="nav-btn"><span>🛫</span>即時離場</a>
+        <a href="schedule_arr.html" class="nav-btn"><span>📅</span>入境班表</a>
+        <a href="schedule_dep.html" class="nav-btn active"><span>📅</span>出境班表</a>
+    </div>
+
+    <div class="container">
+        <table>
+            <thead><tr><th>航班</th><th>時間</th><th>機坪</th><th>狀態</th></tr></thead>
+            <tbody id="list"><tr><td colspan="4" style="text-align:center;padding:20px">載入中...</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        System by <strong>TIAS RS XinZhi</strong> & Gemini<br>
+        Data Sources: Taoyuan Airport FIDS
+    </div>
+
+    <script>
+        // ⚠️ 替換成 Schedule_Dep CSV 連結
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSU9r4JTOOhZ3qQKEXNZpHqR9B-EQ35U3XwR74LKkJk1v1Rdan8VMgZjKWb1khjCU_VVp4hJ2sJPnx3/pub?gid=2070565332&single=true&output=csv';
+
+        async function fetchData() {
+            try {
+                const res = await fetch(CSV_URL + '&t=' + Date.now());
+                const text = await res.text();
+                const rows = text.split('\n').map(r => r.split(','));
+                let html = '';
+                
+                for (let i = 1; i < rows.length; i++) {
+                    let c = rows[i].map(x => x?x.replace(/"/g,'').trim():'');
+                    if (c.length < 5 || !c[1] || c[1].includes('航班')) continue;
+                    
+                    html += `<tr>
+                        <td><span class="date">${c[0]}</span><span class="flight">${c[1]}</span></td>
+                        <td>${c[2]}</td><td class="gate">${c[3]}</td><td>${c[4]}</td>
+                    </tr>`;
+                }
+                document.getElementById('list').innerHTML = html;
+            } catch (e) { console.error(e); }
+        }
+        fetchData();
+    </script>
+</body>
+</html>
