@@ -3,31 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>入境監控 v2.0 | TPE GOSS</title>
+    <title>TPE GOSS | 入境戰情</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #000; color: #fff; margin: 0; padding-bottom: 70px; }
         
+        /* 導航列 */
         .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #111; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-around; z-index: 1000; }
         .nav-btn { color: #666; text-decoration: none; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
         .nav-btn span { font-size: 16px; margin-bottom: 2px; }
-        .nav-btn.active { color: #00f260; font-weight: bold; }
+        
+        /* 首頁(入境) 亮綠燈 */
+        .nav-btn.active { color: #00f260; font-weight: bold; text-shadow: 0 0 5px rgba(0, 242, 96, 0.5); }
         
         .container { padding: 60px 10px 10px 10px; max-width: 600px; margin: 0 auto; }
         .status-bar { text-align: center; font-size: 11px; color: #666; margin-bottom: 10px; }
 
+        /* 卡片設計 */
         .card { background: #1a1a1a; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #555; position: relative; }
         
-        /* 狀態色 */
         .status-red { border-left-color: #ff4b4b; background: rgba(40,0,0,0.25); }
         .status-yellow { border-left-color: #f1c40f; background: rgba(40,30,0,0.15); }
         .status-blue { border-left-color: #4facfe; background: rgba(0,20,40,0.2); } /* 已落地 */
         
         /* TIAS 專屬樣式 */
-        .card.is-tias { border: 1px solid #4facfe; }
-        .card.is-tias .flight { color: #4facfe; text-shadow: 0 0 5px rgba(79, 172, 254, 0.5); }
+        .card.is-tias { border: 1px solid #4facfe; box-shadow: 0 0 8px rgba(79, 172, 254, 0.2); }
+        .card.is-tias .flight { color: #4facfe; }
 
         .col-left { width: 35%; }
-        .flight { font-size: 20px; font-weight: 800; color: #fff; display: block; }
+        .flight { font-size: 20px; font-weight: 800; color: #fff; display: block; letter-spacing: 0.5px; }
         .sta-time { font-size: 12px; color: #aaa; }
         
         .col-center { text-align: center; width: 30%; }
@@ -36,35 +39,41 @@
         .runway { font-size: 10px; color: #888; display: block; margin-top: 2px; }
         
         .col-right { text-align: right; width: 35%; }
-        .gate { font-size: 24px; font-weight: bold; color: #00f260; display: block; }
-        /* 接駁坪/貨機坪變色 */
-        .gate.remote { color: #ffca28; } 
-        .handler { font-size: 9px; color: #666; text-transform: uppercase; border: 1px solid #333; padding: 1px 3px; border-radius: 3px; }
+        .gate { font-size: 26px; font-weight: bold; color: #00f260; display: block; line-height: 1; }
+        .gate.remote { color: #ffca28; } /* 接駁坪黃色 */
+        .handler { font-size: 9px; color: #666; text-transform: uppercase; border: 1px solid #333; padding: 1px 3px; border-radius: 3px; margin-top: 2px; display: inline-block; }
 
         .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; margin-top: 20px; }
+        .empty-msg { text-align: center; color: #666; margin-top: 50px; font-size: 14px; }
     </style>
 </head>
 <body>
 
     <div class="navbar">
-        <a href="index.html" class="nav-btn active"><span>🛬</span>即時入境</a>
-        <a href="outbound.html" class="nav-btn"><span>🛫</span>即時離場</a>
-        <a href="schedule_arr.html" class="nav-btn"><span>📅</span>入境班表</a>
-        <a href="schedule_dep.html" class="nav-btn"><span>📅</span>出境班表</a>
+        <a href="index.html" class="nav-btn active"><span>🛬</span>入境</a>
+        <a href="outbound.html" class="nav-btn"><span>🛫</span>出境</a>
+        <a href="schedule_arr.html" class="nav-btn"><span>📅</span>入表</a>
+        <a href="schedule_dep.html" class="nav-btn"><span>📅</span>出表</a>
     </div>
 
     <div class="container">
-        <div class="status-bar" id="update-time">載入中...</div>
+        <div class="status-bar" id="update-time">系統連線中...</div>
         <div id="list"></div>
     </div>
 
-    <div class="footer">System by <strong>TIAS RS XinZhi</strong> & Gemini</div>
+    <div class="footer">
+        System by <strong>TIAS RS XinZhi</strong> & Gemini<br>
+        Data Sources: Taoyuan Airport FIDS / OpenSky Network
+    </div>
 
     <script>
-        const CSV_URL = '您的_RealTime_Flights_CSV_連結';
+        // ⚠️⚠️⚠️ 請貼上 RealTime_Flights 的 CSV 連結 ⚠️⚠️⚠️
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSU9r4JTOOhZ3qQKEXNZpHqR9B-EQ35U3XwR74LKkJk1v1Rdan8VMgZjKWb1khjCU_VVp4hJ2sJPnx3/pub?gid=0&single=true&output=csv';
 
         async function fetchData() {
+            const list = document.getElementById('list');
             try {
+                // 加時間戳記防止快取
                 const res = await fetch(CSV_URL + '&t=' + Date.now());
                 const text = await res.text();
                 const rows = text.split('\n').map(r => r.split(','));
@@ -74,6 +83,8 @@
                 // [0]航班, [1]表定, [2]高度, [3]狀態, [4]跑道, [5]機坪, [6]地勤, [7]預計
                 for (let i = 1; i < rows.length; i++) {
                     let c = rows[i].map(x => x?x.replace(/"/g,'').trim():'');
+                    
+                    // 檢查資料完整性
                     if (c.length < 6 || !c[0] || c[0].includes('航班')) continue;
 
                     let statusClass = '';
@@ -106,11 +117,20 @@
                     </div>`;
                     count++;
                 }
-                document.getElementById('list').innerHTML = count ? html : '<div style="text-align:center;color:#666;margin-top:20px">無進場航班</div>';
-                document.getElementById('update-time').innerText = `更新: ${new Date().toLocaleTimeString()} (${count}架)`;
-            } catch (e) { console.error(e); }
+                
+                if (count === 0) list.innerHTML = '<div class="empty-msg">目前空域無進場航班</div>';
+                else list.innerHTML = html;
+                
+                document.getElementById('update-time').innerText = `最後更新: ${new Date().toLocaleTimeString()} (${count}架)`;
+
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('update-time').innerText = '❌ 連線失敗 (請檢查網路)';
+            }
         }
-        fetchData(); setInterval(fetchData, 10000);
+
+        fetchData(); 
+        setInterval(fetchData, 10000); // 每 10 秒刷新
     </script>
 </body>
 </html>
