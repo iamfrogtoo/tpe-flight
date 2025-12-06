@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>即時入境 | TPE GOSS</title>
+    <title>入境監控 v2.0 | TPE GOSS</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #000; color: #fff; margin: 0; padding-bottom: 70px; }
         
-        /* 導航列 */
         .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #111; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-around; z-index: 1000; }
         .nav-btn { color: #666; text-decoration: none; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
         .nav-btn span { font-size: 16px; margin-bottom: 2px; }
@@ -16,25 +15,33 @@
         .container { padding: 60px 10px 10px 10px; max-width: 600px; margin: 0 auto; }
         .status-bar { text-align: center; font-size: 11px; color: #666; margin-bottom: 10px; }
 
-        /* 卡片 */
-        .card { background: #1a1a1a; border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #555; }
+        .card { background: #1a1a1a; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #555; position: relative; }
+        
+        /* 狀態色 */
         .status-red { border-left-color: #ff4b4b; background: rgba(40,0,0,0.25); }
         .status-yellow { border-left-color: #f1c40f; background: rgba(40,30,0,0.15); }
+        .status-blue { border-left-color: #4facfe; background: rgba(0,20,40,0.2); } /* 已落地 */
         
-        .col-left { width: 30%; }
-        .flight { font-size: 20px; font-weight: 800; color: #fff; display: block; }
-        .callsign { font-size: 11px; color: #888; font-family: monospace; }
-        
-        .col-center { text-align: center; width: 40%; }
-        .alt { font-size: 18px; font-weight: bold; color: #4facfe; font-family: monospace; }
-        .status-tag { font-size: 10px; background: #333; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; color: #ccc;}
-        
-        .col-right { text-align: right; width: 30%; }
-        .gate { font-size: 24px; font-weight: bold; color: #00f260; display: block; }
-        .gate-label { font-size: 9px; color: #666; }
+        /* TIAS 專屬樣式 */
+        .card.is-tias { border: 1px solid #4facfe; }
+        .card.is-tias .flight { color: #4facfe; text-shadow: 0 0 5px rgba(79, 172, 254, 0.5); }
 
-        .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; margin-top: 20px; line-height: 1.5; }
-        .footer strong { color: #666; }
+        .col-left { width: 35%; }
+        .flight { font-size: 20px; font-weight: 800; color: #fff; display: block; }
+        .sta-time { font-size: 12px; color: #aaa; }
+        
+        .col-center { text-align: center; width: 30%; }
+        .alt { font-size: 18px; font-weight: bold; color: #fff; font-family: monospace; }
+        .eta-tag { font-size: 10px; background: #333; padding: 2px 6px; border-radius: 4px; margin-top: 2px; display: inline-block; color: #ccc;}
+        .runway { font-size: 10px; color: #888; display: block; margin-top: 2px; }
+        
+        .col-right { text-align: right; width: 35%; }
+        .gate { font-size: 24px; font-weight: bold; color: #00f260; display: block; }
+        /* 接駁坪/貨機坪變色 */
+        .gate.remote { color: #ffca28; } 
+        .handler { font-size: 9px; color: #666; text-transform: uppercase; border: 1px solid #333; padding: 1px 3px; border-radius: 3px; }
+
+        .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -51,14 +58,10 @@
         <div id="list"></div>
     </div>
 
-    <div class="footer">
-        System by <strong>TIAS RS XinZhi</strong> & Gemini<br>
-        Data Sources: Taoyuan Airport FIDS / OpenSky
-    </div>
+    <div class="footer">System by <strong>TIAS RS XinZhi</strong> & Gemini</div>
 
     <script>
-        // ⚠️ 替換成 RealTime_Flights CSV 連結
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSU9r4JTOOhZ3qQKEXNZpHqR9B-EQ35U3XwR74LKkJk1v1Rdan8VMgZjKWb1khjCU_VVp4hJ2sJPnx3/pub?gid=0&single=true&output=csv';
+        const CSV_URL = '您的_RealTime_Flights_CSV_連結';
 
         async function fetchData() {
             try {
@@ -68,19 +71,38 @@
                 let html = '';
                 let count = 0;
 
+                // [0]航班, [1]表定, [2]高度, [3]狀態, [4]跑道, [5]機坪, [6]地勤, [7]預計
                 for (let i = 1; i < rows.length; i++) {
                     let c = rows[i].map(x => x?x.replace(/"/g,'').trim():'');
-                    if (c.length < 5 || !c[0] || c[0].includes('航班')) continue;
+                    if (c.length < 6 || !c[0] || c[0].includes('航班')) continue;
 
                     let statusClass = '';
                     if (c[3].includes('即將落地')) statusClass = 'status-red';
                     else if (c[3].includes('進場中')) statusClass = 'status-yellow';
+                    else if (c[3].includes('已落地')) statusClass = 'status-blue';
+
+                    // TIAS 判斷
+                    let isTias = c[6] === 'TIAS' ? 'is-tias' : '';
+                    
+                    // 機坪判斷 (R結尾 或 純數字且>500為貨機坪)
+                    let gateClass = '';
+                    if (c[5].endsWith('R') || (parseInt(c[5]) > 500)) gateClass = 'remote';
 
                     html += `
-                    <div class="card ${statusClass}">
-                        <div class="col-left"><span class="flight">${c[0]}</span><span class="callsign">${c[1]}</span></div>
-                        <div class="col-center"><div class="alt">${c[2]}</div><div class="status-tag">${c[3]}</div></div>
-                        <div class="col-right"><div class="gate">${c[5]||'-'}</div><div class="gate-label">GATE</div></div>
+                    <div class="card ${statusClass} ${isTias}">
+                        <div class="col-left">
+                            <span class="flight">${c[0]}</span>
+                            <span class="sta-time">STA ${c[1]}</span>
+                        </div>
+                        <div class="col-center">
+                            <div class="alt">${c[2]} ft</div>
+                            <div class="eta-tag">剩 ${c[7]}</div>
+                            <span class="runway">${c[4]}</span>
+                        </div>
+                        <div class="col-right">
+                            <div class="gate ${gateClass}">${c[5]||'-'}</div>
+                            <span class="handler">${c[6]}</span>
+                        </div>
                     </div>`;
                     count++;
                 }
