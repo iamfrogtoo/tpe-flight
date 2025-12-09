@@ -3,34 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>即時離場 | TPE GOSS</title>
+    <title>出境監控 v44 | TPE GOSS</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #000; color: #fff; margin: 0; padding-bottom: 70px; }
-        .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #111; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-around; z-index: 1000; }
-        .nav-btn { color: #666; text-decoration: none; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0d0d0d; color: #fff; margin: 0; padding-bottom: 70px; }
+        .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-around; z-index: 1000; }
+        .nav-btn { color: #888; text-decoration: none; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
         .nav-btn span { font-size: 16px; margin-bottom: 2px; }
-        .nav-btn.active { color: #ffca28; font-weight: bold; } /* 黃色 */
+        .nav-btn.active { color: #ffca28; font-weight: bold; } /* 出境黃色 */
         
-        .container { padding: 60px 10px 10px 10px; max-width: 600px; margin: 0 auto; }
+        .container { padding: 70px 10px 10px 10px; max-width: 600px; margin: 0 auto; }
         .status-bar { text-align: center; font-size: 11px; color: #666; margin-bottom: 10px; }
+
+        .card { background: #1e1e1e; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; position: relative; }
         
-        .card { background: #181818; border-bottom: 1px solid #333; padding: 15px 10px; display: flex; justify-content: space-between; align-items: center; }
-        .flight { font-size: 20px; font-weight: bold; color: #fff; }
-        .time { font-size: 14px; color: #ffca28; font-weight: bold; margin-top: 2px; display:block;}
-        .gate { font-size: 24px; font-weight: bold; color: #00f260; }
-        .status-text { font-size: 11px; color: #888; margin-top: 2px; display:block; text-align:right;}
+        .handler-tag { position: absolute; top: 0; right: 0; font-size: 9px; padding: 2px 6px; border-bottom-left-radius: 6px; font-weight: bold; }
         
-        .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; margin-top: 20px; line-height: 1.5; }
-        .footer strong { color: #666; }
+        /* 地勤色 */
+        .h-TIAS { border-left: 4px solid #4facfe; }
+        .h-TIAS .handler-tag { background: #4facfe; color: #000; }
+        .h-EVA { border-left: 4px solid #2ecc71; }
+        .h-EVA .handler-tag { background: #2ecc71; color: #000; }
+        .h-SJX { border-left: 4px solid #d4af37; }
+        .h-SJX .handler-tag { background: #d4af37; color: #000; }
+        .h-UPS { border-left: 4px solid #d35400; }
+        .h-UPS .handler-tag { background: #d35400; color: #fff; }
+
+        .flight { font-size: 22px; font-weight: 800; color: #fff; }
+        .time { font-size: 14px; color: #ffca28; font-weight: bold; display: block; margin-top: 4px; }
+        
+        .gate { font-size: 28px; font-weight: bold; color: #00f260; }
+        .status { font-size: 12px; color: #888; margin-top: 4px; display: block; text-align: right; }
+
+        .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <div class="navbar">
-        <a href="index.html" class="nav-btn"><span>🛬</span>即時入境</a>
-        <a href="outbound.html" class="nav-btn active"><span>🛫</span>即時離場</a>
-        <a href="schedule_arr.html" class="nav-btn"><span>📅</span>入境班表</a>
-        <a href="schedule_dep.html" class="nav-btn"><span>📅</span>出境班表</a>
+        <a href="index.html" class="nav-btn"><span>🛬</span>入境</a>
+        <a href="outbound.html" class="nav-btn active"><span>🛫</span>出境</a>
+        <a href="schedule_arr.html" class="nav-btn"><span>📅</span>入表</a>
+        <a href="schedule_dep.html" class="nav-btn"><span>📅</span>出表</a>
     </div>
 
     <div class="container">
@@ -38,14 +51,10 @@
         <div id="list"></div>
     </div>
 
-    <div class="footer">
-        System by <strong>TIAS RS XinZhi</strong> & Gemini<br>
-        Data Sources: Taoyuan Airport FIDS
-    </div>
+    <div class="footer">System by <strong>TIAS RS XinZhi</strong> & Gemini</div>
 
     <script>
-        // ⚠️ 替換成 Departures CSV 連結
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSU9r4JTOOhZ3qQKEXNZpHqR9B-EQ35U3XwR74LKkJk1v1Rdan8VMgZjKWb1khjCU_VVp4hJ2sJPnx3/pub?gid=2059190189&single=true&output=csv';
+        const CSV_URL = '您的_Departures_CSV_連結';
 
         async function fetchData() {
             try {
@@ -55,24 +64,28 @@
                 let html = '';
                 let count = 0;
 
+                // [0]航班, [1]時間, [2]機坪, [3]狀態, [4]地勤
                 for (let i = 1; i < rows.length; i++) {
                     let c = rows[i].map(x => x?x.replace(/"/g,'').trim():'');
-                    if (c.length < 4 || !c[0] || c[0].includes('航班')) continue;
+                    if (c.length < 5 || !c[0] || c[0].includes('航班')) continue;
+
+                    let handlerClass = 'h-' + (c[4] || 'EVA');
 
                     html += `
-                    <div class="card">
+                    <div class="card ${handlerClass}">
+                        <div class="handler-tag">${c[4]||'EVA'}</div>
                         <div>
                             <span class="flight">${c[0]}</span>
                             <span class="time">ETD ${c[1]}</span>
                         </div>
                         <div style="text-align:right;">
                             <span class="gate">${c[2]||'-'}</span>
-                            <span class="status-text">${c[3]}</span>
+                            <span class="status">${c[3]}</span>
                         </div>
                     </div>`;
                     count++;
                 }
-                document.getElementById('list').innerHTML = count ? html : '<div style="text-align:center;color:#666;margin-top:20px">無離場航班</div>';
+                document.getElementById('list').innerHTML = count ? html : '<div style="text-align:center;color:#666;margin-top:20px">無出境航班</div>';
                 document.getElementById('update-time').innerText = `更新: ${new Date().toLocaleTimeString()} (${count}筆)`;
             } catch (e) { console.error(e); }
         }

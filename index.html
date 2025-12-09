@@ -3,48 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TPE GOSS | 入境戰情</title>
+    <title>入境監控 v44 | TPE GOSS</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #000; color: #fff; margin: 0; padding-bottom: 70px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0d0d0d; color: #fff; margin: 0; padding-bottom: 70px; }
         
-        /* 導航列 */
-        .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #111; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-around; z-index: 1000; }
-        .nav-btn { color: #666; text-decoration: none; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
+        .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-around; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .nav-btn { color: #888; text-decoration: none; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
         .nav-btn span { font-size: 16px; margin-bottom: 2px; }
+        .nav-btn.active { color: #00f260; font-weight: bold; text-shadow: 0 0 8px rgba(0, 242, 96, 0.4); }
         
-        /* 首頁(入境) 亮綠燈 */
-        .nav-btn.active { color: #00f260; font-weight: bold; text-shadow: 0 0 5px rgba(0, 242, 96, 0.5); }
-        
-        .container { padding: 60px 10px 10px 10px; max-width: 600px; margin: 0 auto; }
+        .container { padding: 70px 10px 10px 10px; max-width: 600px; margin: 0 auto; }
         .status-bar { text-align: center; font-size: 11px; color: #666; margin-bottom: 10px; }
 
-        /* 卡片設計 */
-        .card { background: #1a1a1a; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #555; position: relative; }
+        .card { background: #1e1e1e; border-radius: 10px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #444; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; overflow: hidden; }
         
-        .status-red { border-left-color: #ff4b4b; background: rgba(40,0,0,0.25); }
-        .status-yellow { border-left-color: #f1c40f; background: rgba(40,30,0,0.15); }
-        .status-blue { border-left-color: #4facfe; background: rgba(0,20,40,0.2); } /* 已落地 */
-        
-        /* TIAS 專屬樣式 */
-        .card.is-tias { border: 1px solid #4facfe; box-shadow: 0 0 8px rgba(79, 172, 254, 0.2); }
-        .card.is-tias .flight { color: #4facfe; }
+        /* 狀態燈號 */
+        .status-red { border-left-color: #ff4b4b; background: linear-gradient(90deg, rgba(255,75,75,0.1), transparent); }
+        .status-yellow { border-left-color: #f1c40f; background: linear-gradient(90deg, rgba(241,196,15,0.1), transparent); }
+        .status-blue { border-left-color: #4facfe; opacity: 0.7; } 
 
-        .col-left { width: 35%; }
-        .flight { font-size: 20px; font-weight: 800; color: #fff; display: block; letter-spacing: 0.5px; }
-        .sta-time { font-size: 12px; color: #aaa; }
+        /* 地勤專屬色 */
+        .handler-tag { position: absolute; top: 0; right: 0; font-size: 9px; padding: 2px 6px; border-bottom-left-radius: 6px; font-weight: bold; }
         
-        .col-center { text-align: center; width: 30%; }
-        .alt { font-size: 18px; font-weight: bold; color: #fff; font-family: monospace; }
-        .eta-tag { font-size: 10px; background: #333; padding: 2px 6px; border-radius: 4px; margin-top: 2px; display: inline-block; color: #ccc;}
-        .runway { font-size: 10px; color: #888; display: block; margin-top: 2px; }
+        .h-TIAS { border: 1px solid #4facfe; box-shadow: inset 0 0 10px rgba(79, 172, 254, 0.1); }
+        .h-TIAS .handler-tag { background: #4facfe; color: #000; }
+        .h-TIAS .flight { color: #4facfe; }
+
+        .h-EVA { border: 1px solid #2ecc71; }
+        .h-EVA .handler-tag { background: #2ecc71; color: #000; }
         
-        .col-right { text-align: right; width: 35%; }
-        .gate { font-size: 26px; font-weight: bold; color: #00f260; display: block; line-height: 1; }
-        .gate.remote { color: #ffca28; } /* 接駁坪黃色 */
-        .handler { font-size: 9px; color: #666; text-transform: uppercase; border: 1px solid #333; padding: 1px 3px; border-radius: 3px; margin-top: 2px; display: inline-block; }
+        .h-SJX { border: 1px solid #d4af37; } /* 星宇金 */
+        .h-SJX .handler-tag { background: #d4af37; color: #000; }
+        
+        .h-UPS { border: 1px solid #d35400; }
+        .h-UPS .handler-tag { background: #d35400; color: #fff; }
+
+        /* 欄位配置 */
+        .col-left { width: 35%; display: flex; flex-direction: column; justify-content: center; }
+        .flight { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: 0.5px; }
+        .reg-num { font-size: 11px; color: #888; font-family: monospace; margin-top: 3px; }
+        .sta-time { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+        .col-center { width: 30%; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+        .alt { font-size: 20px; font-weight: bold; color: #fff; font-family: monospace; }
+        .eta-badge { font-size: 10px; background: #333; padding: 2px 8px; border-radius: 10px; margin: 4px auto; color: #ccc; }
+        .runway { font-size: 11px; color: #ccc; font-weight: bold; letter-spacing: 1px; }
+
+        .col-right { width: 35%; text-align: right; display: flex; flex-direction: column; justify-content: center; }
+        .gate { font-size: 28px; font-weight: bold; color: #00f260; line-height: 1; }
+        .gate.remote { color: #f1c40f; } /* 接駁坪 */
+        .gate-label { font-size: 10px; color: #666; margin-top: 2px; }
 
         .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; margin-top: 20px; }
-        .empty-msg { text-align: center; color: #666; margin-top: 50px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -57,80 +67,61 @@
     </div>
 
     <div class="container">
-        <div class="status-bar" id="update-time">系統連線中...</div>
+        <div class="status-bar" id="update-time">連線中...</div>
         <div id="list"></div>
     </div>
 
-    <div class="footer">
-        System by <strong>TIAS RS XinZhi</strong> & Gemini<br>
-        Data Sources: Taoyuan Airport FIDS / OpenSky Network
-    </div>
+    <div class="footer">System by <strong>TIAS RS XinZhi</strong> & Gemini</div>
 
     <script>
-        // ⚠️⚠️⚠️ 請貼上 RealTime_Flights 的 CSV 連結 ⚠️⚠️⚠️
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSU9r4JTOOhZ3qQKEXNZpHqR9B-EQ35U3XwR74LKkJk1v1Rdan8VMgZjKWb1khjCU_VVp4hJ2sJPnx3/pub?gid=0&single=true&output=csv';
+        const CSV_URL = '您的_RealTime_Flights_CSV_連結';
 
         async function fetchData() {
-            const list = document.getElementById('list');
             try {
-                // 加時間戳記防止快取
                 const res = await fetch(CSV_URL + '&t=' + Date.now());
                 const text = await res.text();
                 const rows = text.split('\n').map(r => r.split(','));
                 let html = '';
                 let count = 0;
 
-                // [0]航班, [1]表定, [2]高度, [3]狀態, [4]跑道, [5]機坪, [6]地勤, [7]預計
+                // [0]航班, [1]編號(Callsign), [2]表定, [3]高度, [4]狀態, [5]跑道, [6]機坪, [7]地勤, [8]預計
                 for (let i = 1; i < rows.length; i++) {
                     let c = rows[i].map(x => x?x.replace(/"/g,'').trim():'');
-                    
-                    // 檢查資料完整性
-                    if (c.length < 6 || !c[0] || c[0].includes('航班')) continue;
+                    if (c.length < 8 || !c[0] || c[0].includes('航班')) continue;
 
                     let statusClass = '';
-                    if (c[3].includes('即將落地')) statusClass = 'status-red';
-                    else if (c[3].includes('進場中')) statusClass = 'status-yellow';
-                    else if (c[3].includes('已落地')) statusClass = 'status-blue';
+                    if (c[4].includes('即將落地')) statusClass = 'status-red';
+                    else if (c[4].includes('進場中')) statusClass = 'status-yellow';
+                    else if (c[4].includes('已落地')) statusClass = 'status-blue';
 
-                    // TIAS 判斷
-                    let isTias = c[6] === 'TIAS' ? 'is-tias' : '';
-                    
-                    // 機坪判斷 (R結尾 或 純數字且>500為貨機坪)
-                    let gateClass = '';
-                    if (c[5].endsWith('R') || (parseInt(c[5]) > 500)) gateClass = 'remote';
+                    let handlerClass = 'h-' + (c[7] || 'EVA'); // 預設 EVA
+                    let gateClass = (c[6].endsWith('R') || parseInt(c[6]) > 500) ? 'remote' : '';
 
                     html += `
-                    <div class="card ${statusClass} ${isTias}">
+                    <div class="card ${statusClass} ${handlerClass}">
+                        <div class="handler-tag">${c[7]||'EVA'}</div>
                         <div class="col-left">
                             <span class="flight">${c[0]}</span>
-                            <span class="sta-time">STA ${c[1]}</span>
+                            <span class="reg-num">${c[1]}</span>
+                            <span class="sta-time">STA ${c[2]}</span>
                         </div>
                         <div class="col-center">
-                            <div class="alt">${c[2]} ft</div>
-                            <div class="eta-tag">剩 ${c[7]}</div>
-                            <span class="runway">${c[4]}</span>
+                            <span class="alt">${c[3]}</span>
+                            <span class="eta-badge">剩 ${c[8]}</span>
+                            <span class="runway">${c[5]}</span>
                         </div>
                         <div class="col-right">
-                            <div class="gate ${gateClass}">${c[5]||'-'}</div>
-                            <span class="handler">${c[6]}</span>
+                            <span class="gate ${gateClass}">${c[6]||'-'}</span>
+                            <span class="gate-label">GATE</span>
                         </div>
                     </div>`;
                     count++;
                 }
-                
-                if (count === 0) list.innerHTML = '<div class="empty-msg">目前空域無進場航班</div>';
-                else list.innerHTML = html;
-                
-                document.getElementById('update-time').innerText = `最後更新: ${new Date().toLocaleTimeString()} (${count}架)`;
-
-            } catch (e) { 
-                console.error(e);
-                document.getElementById('update-time').innerText = '❌ 連線失敗 (請檢查網路)';
-            }
+                document.getElementById('list').innerHTML = count ? html : '<div style="text-align:center;color:#666;margin-top:20px">無航班</div>';
+                document.getElementById('update-time').innerText = `更新: ${new Date().toLocaleTimeString()} (${count}架)`;
+            } catch (e) { console.error(e); }
         }
-
-        fetchData(); 
-        setInterval(fetchData, 10000); // 每 10 秒刷新
+        fetchData(); setInterval(fetchData, 10000);
     </script>
 </body>
 </html>
