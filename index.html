@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>入境監控 v44 | TPE GOSS</title>
+    <title>入境戰情 | TPE GOSS</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0d0d0d; color: #fff; margin: 0; padding-bottom: 70px; }
         
@@ -17,12 +17,10 @@
 
         .card { background: #1e1e1e; border-radius: 10px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #444; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; overflow: hidden; }
         
-        /* 狀態燈號 */
         .status-red { border-left-color: #ff4b4b; background: linear-gradient(90deg, rgba(255,75,75,0.1), transparent); }
         .status-yellow { border-left-color: #f1c40f; background: linear-gradient(90deg, rgba(241,196,15,0.1), transparent); }
-        .status-blue { border-left-color: #4facfe; opacity: 0.7; } 
+        .status-blue { border-left-color: #4facfe; opacity: 0.8; } 
 
-        /* 地勤專屬色 */
         .handler-tag { position: absolute; top: 0; right: 0; font-size: 9px; padding: 2px 6px; border-bottom-left-radius: 6px; font-weight: bold; }
         
         .h-TIAS { border: 1px solid #4facfe; box-shadow: inset 0 0 10px rgba(79, 172, 254, 0.1); }
@@ -32,13 +30,12 @@
         .h-EVA { border: 1px solid #2ecc71; }
         .h-EVA .handler-tag { background: #2ecc71; color: #000; }
         
-        .h-SJX { border: 1px solid #d4af37; } /* 星宇金 */
+        .h-SJX { border: 1px solid #d4af37; }
         .h-SJX .handler-tag { background: #d4af37; color: #000; }
         
         .h-UPS { border: 1px solid #d35400; }
         .h-UPS .handler-tag { background: #d35400; color: #fff; }
 
-        /* 欄位配置 */
         .col-left { width: 35%; display: flex; flex-direction: column; justify-content: center; }
         .flight { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: 0.5px; }
         .reg-num { font-size: 11px; color: #888; font-family: monospace; margin-top: 3px; }
@@ -47,14 +44,15 @@
         .col-center { width: 30%; text-align: center; display: flex; flex-direction: column; justify-content: center; }
         .alt { font-size: 20px; font-weight: bold; color: #fff; font-family: monospace; }
         .eta-badge { font-size: 10px; background: #333; padding: 2px 8px; border-radius: 10px; margin: 4px auto; color: #ccc; }
-        .runway { font-size: 11px; color: #ccc; font-weight: bold; letter-spacing: 1px; }
+        .runway { font-size: 12px; color: #ffca28; font-weight: bold; letter-spacing: 1px; margin-top: 2px; } /* 跑道顯眼 */
 
         .col-right { width: 35%; text-align: right; display: flex; flex-direction: column; justify-content: center; }
         .gate { font-size: 28px; font-weight: bold; color: #00f260; line-height: 1; }
-        .gate.remote { color: #f1c40f; } /* 接駁坪 */
+        .gate.remote { color: #f1c40f; }
         .gate-label { font-size: 10px; color: #666; margin-top: 2px; }
 
         .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; margin-top: 20px; }
+        .empty-msg { text-align: center; color: #666; margin-top: 50px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -84,7 +82,7 @@
                 let html = '';
                 let count = 0;
 
-                // [0]航班, [1]編號(Callsign), [2]表定, [3]高度, [4]狀態, [5]跑道, [6]機坪, [7]地勤, [8]預計
+                // [0]航班, [1]編號, [2]表定, [3]高度, [4]狀態, [5]跑道, [6]機坪, [7]地勤, [8]預計
                 for (let i = 1; i < rows.length; i++) {
                     let c = rows[i].map(x => x?x.replace(/"/g,'').trim():'');
                     if (c.length < 8 || !c[0] || c[0].includes('航班')) continue;
@@ -94,7 +92,7 @@
                     else if (c[4].includes('進場中')) statusClass = 'status-yellow';
                     else if (c[4].includes('已落地')) statusClass = 'status-blue';
 
-                    let handlerClass = 'h-' + (c[7] || 'EVA'); // 預設 EVA
+                    let handlerClass = 'h-' + (c[7] || 'EVA');
                     let gateClass = (c[6].endsWith('R') || parseInt(c[6]) > 500) ? 'remote' : '';
 
                     html += `
@@ -102,8 +100,8 @@
                         <div class="handler-tag">${c[7]||'EVA'}</div>
                         <div class="col-left">
                             <span class="flight">${c[0]}</span>
-                            <span class="reg-num">${c[1]}</span>
-                            <span class="sta-time">STA ${c[2]}</span>
+                            <span class="reg-num">${c[1]||''}</span>
+                            <span class="sta-time">STA ${c[2]||''}</span>
                         </div>
                         <div class="col-center">
                             <span class="alt">${c[3]}</span>
@@ -117,7 +115,8 @@
                     </div>`;
                     count++;
                 }
-                document.getElementById('list').innerHTML = count ? html : '<div style="text-align:center;color:#666;margin-top:20px">無航班</div>';
+                
+                document.getElementById('list').innerHTML = count ? html : '<div class="empty-msg">無進場航班</div>';
                 document.getElementById('update-time').innerText = `更新: ${new Date().toLocaleTimeString()} (${count}架)`;
             } catch (e) { console.error(e); }
         }

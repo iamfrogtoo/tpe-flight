@@ -9,7 +9,7 @@
         .navbar { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-around; z-index: 1000; }
         .nav-btn { color: #888; text-decoration: none; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
         .nav-btn span { font-size: 16px; margin-bottom: 2px; }
-        .nav-btn.active { color: #ffca28; font-weight: bold; } /* 出境黃色 */
+        .nav-btn.active { color: #ffca28; font-weight: bold; }
         
         .container { padding: 70px 10px 10px 10px; max-width: 600px; margin: 0 auto; }
         .status-bar { text-align: center; font-size: 11px; color: #666; margin-bottom: 10px; }
@@ -32,6 +32,7 @@
         .time { font-size: 14px; color: #ffca28; font-weight: bold; display: block; margin-top: 4px; }
         
         .gate { font-size: 28px; font-weight: bold; color: #00f260; }
+        .gate.remote { color: #f1c40f; } /* 接駁坪黃色 */
         .status { font-size: 12px; color: #888; margin-top: 4px; display: block; text-align: right; }
 
         .footer { text-align: center; padding: 20px; color: #444; font-size: 10px; margin-top: 20px; }
@@ -70,6 +71,9 @@
                     if (c.length < 5 || !c[0] || c[0].includes('航班')) continue;
 
                     let handlerClass = 'h-' + (c[4] || 'EVA');
+                    let gate = c[2] || '-';
+                    // 貨機坪與接駁坪判斷
+                    let gateClass = (gate.endsWith('R') || parseInt(gate) > 500) ? 'remote' : '';
 
                     html += `
                     <div class="card ${handlerClass}">
@@ -79,7 +83,7 @@
                             <span class="time">ETD ${c[1]}</span>
                         </div>
                         <div style="text-align:right;">
-                            <span class="gate">${c[2]||'-'}</span>
+                            <span class="gate ${gateClass}">${gate}</span>
                             <span class="status">${c[3]}</span>
                         </div>
                     </div>`;
